@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        client.cpp
+        client.h
 )
 
 qt_add_executable(dice-server

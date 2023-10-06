@@ -31,27 +31,43 @@ void MainWindow::handleButtonPress()
 void MainWindow::newConnection()
 {
     qDebug() << "New connection";
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_10);
-
-    out << "Jepeti jee";
 
     QTcpSocket *clientConnection = tcpServer->nextPendingConnection();
     connect(clientConnection, &QAbstractSocket::disconnected,
-            clientConnection, &QObject::deleteLater);
+            this, &MainWindow::handleDisconnect);
+
+    QString name = QString("%1/%2")
+                .arg(clientConnection->peerAddress().toString())
+                .arg(clientConnection->peerPort());
 
     int rowIndex = ui->connectionsTable->rowCount();
     ui->connectionsTable->insertRow(rowIndex);
-    QTableWidgetItem *addrItem = new QTableWidgetItem(tr("%1/%2")
-                .arg(clientConnection->peerAddress().toString())
-                .arg(clientConnection->peerPort()));
+    QTableWidgetItem *addrItem = new QTableWidgetItem(name);
     ui->connectionsTable->setItem(rowIndex, 0, addrItem);
     QTableWidgetItem *bytesItem = new QTableWidgetItem("0");
     ui->connectionsTable->setItem(rowIndex, 1, bytesItem);
 
-    clientConnection->write(block);
-    clientConnection->disconnectFromHost();
+    Client *c = new Client(name, clientConnection, bytesItem, rowIndex);
+    connect(clientConnection, &QIODevice::readyRead, c, &Client::readBytes);
+    clients.push_back(c);
+}
+
+
+void MainWindow::handleDisconnect()
+{
+    QTcpSocket *sock = qobject_cast<QTcpSocket*>(sender());
+    for(QVector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
+    {
+        if ((*it)->isMySocket(sock))
+        {
+            qDebug() << "Erasing " << (*it)->getName();
+            ui->connectionsTable->removeRow((*it)->getRowIndex());
+            delete *it;
+            clients.erase(it);
+            return;
+        }
+    }
+    qDebug() << "handleDisconnect called but no matching socket found";
 }
 
 
