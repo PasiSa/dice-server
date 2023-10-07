@@ -1,11 +1,13 @@
-#include <QtNetwork>
 #include "client.h"
 #include "mainwindow.h"
 
 Client::Client(QString name, QTcpSocket *sock, QTableWidgetItem *byteWidget, int rowIndex)
-        : name_(name), socket_(sock), byteWidget_(byteWidget), rowIndex_(rowIndex), byteCount_(0)
+        : name_(name),
+        socket_(sock),
+        byteWidget_(byteWidget),
+        byteCount_(0),
+        startTime_(QDateTime::currentDateTime())
 {
-    qDebug() << "constructor called";
 }
 
 
@@ -15,7 +17,6 @@ Client::Client(Client&& c)
     name_ = c.name_;
     socket_ = c.socket_;
     byteWidget_ = c.byteWidget_;
-    rowIndex_ = c.rowIndex_;
     c.socket_ = nullptr;
 }
 
@@ -38,10 +39,25 @@ void Client::removeFromTable(QTableWidget *table)
 }
 
 
+void Client::makeLogEntry(ConnectionLog& log) const
+{
+    QDateTime currentTime = QDateTime::currentDateTime();
+    qint64 msecs = startTime_.msecsTo(currentTime);
+    double bps = (double) byteCount_ / msecs / 1000;
+
+    QString line = QString("%1: %2; %3 bytes; %4 ms; %5 b/s")
+            .arg(currentTime.time().toString("hh:mm:ss"))
+            .arg(name_)
+            .arg(byteCount_)
+            .arg(msecs)
+            .arg(bps);
+    log.addLine(line);
+}
+
+
 void Client::readBytes()
 {
     QByteArray data = socket_->readAll();
-    qDebug() << "Received data: " << data;
     byteCount_ += data.size();
     byteWidget_->setText(QString::number(byteCount_));
 }

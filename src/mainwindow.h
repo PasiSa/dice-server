@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "client.h"
+#include "connectionlog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -37,5 +38,6 @@ private:
     QTcpServer *tcpServer_ = nullptr;
     QVector<Client*> clients_;
     serverstate_t serverstate_;
+    ConnectionLog log_;
 };
 #endif // MAINWINDOW_H

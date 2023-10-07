@@ -7,6 +7,9 @@
 #include <QString>
 #include <QObject>
 #include <QMainWindow>
+#include <QDateTime>
+
+#include "connectionlog.h"
 
 class Client : public QObject
 {
@@ -20,6 +23,7 @@ public:
     Client(Client&& c);
 
     void removeFromTable(QTableWidget *table);
+    void makeLogEntry(ConnectionLog& log) const;
 
     bool isMySocket(QTcpSocket *sock) const { return sock == socket_; }
     QTcpSocket *getSocket() const { return socket_; }
@@ -33,7 +37,7 @@ private:
     QTcpSocket *socket_;
     QTableWidgetItem *byteWidget_;  // owned by the QTableWidget, do not delete
     unsigned int byteCount_;
-    int rowIndex_;
+    QDateTime startTime_;
 };
 
 #endif // CLIENT_H

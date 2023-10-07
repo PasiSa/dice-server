@@ -9,8 +9,10 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow), serverstate_(CLOSED)
 {
     ui->setupUi(this);
+    ui->portEdit->setValidator(new QIntValidator(1, 65535, this));
     connect(ui->listenButton, SIGNAL(clicked()), this, SLOT(handleListenButton()));
     ui->connectionsTable->setColumnWidth(0, 160);
+    log_.setQTextBrowser(ui->connectionBrowser);
 }
 
 
@@ -23,7 +25,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::handleListenButton()
 {
-    qDebug() << "handleListenButton";
     if (serverstate_ == CLOSED) {
         startListen();
         ui->activityLabel->setText("Server is accepting connections");
@@ -43,8 +44,6 @@ void MainWindow::handleListenButton()
 
 void MainWindow::newConnection()
 {
-    qDebug() << "New connection";
-
     QTcpSocket *clientConnection = tcpServer_->nextPendingConnection();
     connect(clientConnection, &QAbstractSocket::disconnected,
             this, &MainWindow::handleDisconnect);
@@ -85,13 +84,7 @@ void MainWindow::startListen()
 {
     int port = 0;
     if (ui->portEdit->text().length() > 0) {
-        bool ok;
-        port = ui->portEdit->text().toInt(&ok);
-        if (!ok || port > 65535) {
-            QMessageBox::critical(this, tr("Dice Server"),
-                                tr("Port number is not valid"));
-            return;
-        }
+        port = ui->portEdit->text().toInt();
     }
     tcpServer_ = new QTcpServer(this);
     if (!tcpServer_->listen(QHostAddress::Any, port)) {
@@ -124,6 +117,9 @@ void MainWindow::startListen()
 QVector<Client*>::iterator MainWindow::removeConnection(QVector<Client*>::iterator it)
 {
     qDebug() << "Erasing " << (*it)->getName();
+
+    (*it)->makeLogEntry(log_);
+
     (*it)->removeFromTable(ui->connectionsTable);
     QTcpSocket *sock = (*it)->getSocket();
     disconnect(sock, &QAbstractSocket::disconnected, this, &MainWindow::handleDisconnect);
