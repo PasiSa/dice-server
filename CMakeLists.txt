@@ -16,18 +16,9 @@ find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS Network)
 find_package(Qt6 COMPONENTS Widgets)
 
-set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-        client.cpp
-        client.h
-)
+file(GLOB SOURCES "src/*.cpp" "src/*.h" "src/*.ui")
 
-qt_add_executable(dice-server
-    ${PROJECT_SOURCES}
-)
+qt_add_executable(dice-server ${SOURCES})
 
 target_link_libraries(dice-server PUBLIC
     Qt::Core
