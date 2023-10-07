@@ -2,6 +2,7 @@
 #define CLIENT_H
 
 #include <QTableWidgetItem>
+#include <QTableWidget>
 #include <QTcpSocket>
 #include <QString>
 #include <QObject>
@@ -17,12 +18,12 @@ public:
     Client& operator=(const Client&) { qDebug() << "assignment called"; return *this; }
     Client(const Client &c) { qDebug() << "copy constructor called"; }
     Client(Client&& c);
-    //Client(const Client&) = delete;  // socket ownership cannot be replicated
-    //Client& operator=(const Client&) = delete;  // socket ownership cannot be replicated
+
+    void removeFromTable(QTableWidget *table);
 
     bool isMySocket(QTcpSocket *sock) const { return sock == socket_; }
+    QTcpSocket *getSocket() const { return socket_; }
     const QString getName() const { return name_; }
-    const int getRowIndex() const { return rowIndex_; }
 
 public slots:
     void readBytes();

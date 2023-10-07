@@ -9,6 +9,12 @@ namespace Ui { class MainWindow; }
 class QTcpServer;
 QT_END_NAMESPACE
 
+typedef enum
+{
+    CLOSED,
+    LISTENING
+} serverstate_t;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -18,15 +24,18 @@ public:
     ~MainWindow();
 
 public slots:
-    void handleButtonPress();
+    void handleListenButton();
     void newConnection();
     void handleDisconnect();
 
 private:
-    void initServer();
+    void startListen();
+    QVector<Client*>::iterator removeConnection(QVector<Client*>::iterator it);
+    void closeConnections();
 
     Ui::MainWindow *ui;
-    QTcpServer *tcpServer = nullptr;
-    QVector<Client*> clients;
+    QTcpServer *tcpServer_ = nullptr;
+    QVector<Client*> clients_;
+    serverstate_t serverstate_;
 };
 #endif // MAINWINDOW_H

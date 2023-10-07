@@ -6,25 +6,38 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::MainWindow), serverstate_(CLOSED)
 {
     ui->setupUi(this);
-    connect(ui->listenButton, SIGNAL(clicked()), this, SLOT(handleButtonPress()));
+    connect(ui->listenButton, SIGNAL(clicked()), this, SLOT(handleListenButton()));
+    ui->connectionsTable->setColumnWidth(0, 160);
 }
 
 
 MainWindow::~MainWindow()
 {
+    closeConnections();
     delete ui;
 }
 
 
-void MainWindow::handleButtonPress()
+void MainWindow::handleListenButton()
 {
-    QString text = ui->portEdit->text();
-    qDebug() << "Button pressed: " << text;
-    initServer();
-    connect(tcpServer, &QTcpServer::newConnection, this, &MainWindow::newConnection);
+    qDebug() << "handleListenButton";
+    if (serverstate_ == CLOSED) {
+        startListen();
+        ui->activityLabel->setText("Server is accepting connections");
+        ui->activityLabel->setStyleSheet("color: green;");
+        ui->listenButton->setText("Close");
+        serverstate_ = LISTENING;
+    } else {
+        closeConnections();
+        ui->activityLabel->setText("Server is not active");
+        ui->activityLabel->setStyleSheet("color: red;");
+        ui->listenButton->setText("Listen");
+        serverstate_ = CLOSED;
+
+    }
 }
 
 
@@ -32,7 +45,7 @@ void MainWindow::newConnection()
 {
     qDebug() << "New connection";
 
-    QTcpSocket *clientConnection = tcpServer->nextPendingConnection();
+    QTcpSocket *clientConnection = tcpServer_->nextPendingConnection();
     connect(clientConnection, &QAbstractSocket::disconnected,
             this, &MainWindow::handleDisconnect);
 
@@ -49,21 +62,18 @@ void MainWindow::newConnection()
 
     Client *c = new Client(name, clientConnection, bytesItem, rowIndex);
     connect(clientConnection, &QIODevice::readyRead, c, &Client::readBytes);
-    clients.push_back(c);
+    clients_.push_back(c);
 }
 
 
 void MainWindow::handleDisconnect()
 {
     QTcpSocket *sock = qobject_cast<QTcpSocket*>(sender());
-    for(QVector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
+    for(QVector<Client*>::iterator it = clients_.begin(); it != clients_.end(); ++it)
     {
         if ((*it)->isMySocket(sock))
         {
-            qDebug() << "Erasing " << (*it)->getName();
-            ui->connectionsTable->removeRow((*it)->getRowIndex());
-            delete *it;
-            clients.erase(it);
+            removeConnection(it);
             return;
         }
     }
@@ -71,14 +81,23 @@ void MainWindow::handleDisconnect()
 }
 
 
-void MainWindow::initServer()
+void MainWindow::startListen()
 {
-    tcpServer = new QTcpServer(this);
-    if (!tcpServer->listen()) {
-        QMessageBox::critical(this, tr("Fortune Server"),
-                              tr("Unable to start the server: %1.")
-                              .arg(tcpServer->errorString()));
-        close();
+    int port = 0;
+    if (ui->portEdit->text().length() > 0) {
+        bool ok;
+        port = ui->portEdit->text().toInt(&ok);
+        if (!ok || port > 65535) {
+            QMessageBox::critical(this, tr("Dice Server"),
+                                tr("Port number is not valid"));
+            return;
+        }
+    }
+    tcpServer_ = new QTcpServer(this);
+    if (!tcpServer_->listen(QHostAddress::Any, port)) {
+        QMessageBox::critical(this, tr("Dice Server"),
+                              tr("Failed to bind to a port: %1.")
+                              .arg(tcpServer_->errorString()));
         return;
     }
 
@@ -97,5 +116,25 @@ void MainWindow::initServer()
         ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
 
     ui->ipAddrLabel->setText(ipAddress);
-    ui->portEdit->setText(QString::number(tcpServer->serverPort()));
+    ui->portEdit->setText(QString::number(tcpServer_->serverPort()));
+    connect(tcpServer_, &QTcpServer::newConnection, this, &MainWindow::newConnection);
+}
+
+
+QVector<Client*>::iterator MainWindow::removeConnection(QVector<Client*>::iterator it)
+{
+    qDebug() << "Erasing " << (*it)->getName();
+    (*it)->removeFromTable(ui->connectionsTable);
+    QTcpSocket *sock = (*it)->getSocket();
+    disconnect(sock, &QAbstractSocket::disconnected, this, &MainWindow::handleDisconnect);
+    sock->disconnectFromHost();
+    delete *it;
+    return clients_.erase(it);
+}
+
+void MainWindow::closeConnections()
+{
+    for(QVector<Client*>::iterator it = clients_.begin(); it != clients_.end(); ) {
+        it = removeConnection(it);
+    }
 }

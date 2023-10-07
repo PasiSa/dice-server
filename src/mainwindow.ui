@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>375</width>
+    <height>419</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Dice Server</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLabel" name="label">
@@ -79,8 +79,8 @@
    <widget class="QTableWidget" name="connectionsTable">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>60</y>
+      <x>20</x>
+      <y>130</y>
       <width>281</width>
       <height>231</height>
      </rect>
@@ -102,8 +102,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>40</y>
+      <x>20</x>
+      <y>110</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -112,13 +112,29 @@
      <string>Clients</string>
     </property>
    </widget>
+   <widget class="QLabel" name="activityLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>60</y>
+      <width>241</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: red;</string>
+    </property>
+    <property name="text">
+     <string>Server is not active</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>375</width>
      <height>20</height>
     </rect>
    </property>

@@ -28,6 +28,16 @@ Client::~Client()
 }
 
 
+void Client::removeFromTable(QTableWidget *table)
+{
+    QList<QTableWidgetItem *> found = table->findItems(name_, Qt::MatchExactly);
+    if (found.begin() != found.end()) {
+        QTableWidgetItem *item = *(found.begin());
+        table->removeRow(item->row());
+    }
+}
+
+
 void Client::readBytes()
 {
     QByteArray data = socket_->readAll();
