@@ -43,7 +43,7 @@ void Client::makeLogEntry(ConnectionLog& log) const
 {
     QDateTime currentTime = QDateTime::currentDateTime();
     qint64 msecs = startTime_.msecsTo(currentTime);
-    double bps = (double) byteCount_ / msecs / 1000;
+    double bps = (double) byteCount_ / ((double) msecs / 1000);
 
     QString line = QString("%1: %2; %3 bytes; %4 ms; %5 b/s")
             .arg(currentTime.time().toString("hh:mm:ss"))
